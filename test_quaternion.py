@@ -1,6 +1,6 @@
 import numpy as np
-from quaternion import q_from_axis_angle, q_conjugate, q_normalize
-from quaternion_multiplication import qmul
+from quaternion import q_from_axis_angle, q_conjugate, q_normalize, q_rotate_vector, qmul
+
 
 result = q_from_axis_angle([0, 0, 1], 90)
 expected = np.array([0.7071, 0, 0, 0.7071])
@@ -30,3 +30,7 @@ print("Test 6:", result, np.allclose(result, expected, atol=1e-4))
 result = qmul(q_from_axis_angle([0,0,1], 90), q_from_axis_angle([1,0,0], 90))
 expected = np.array([0.5, 0.5, 0.5, 0.5])
 print("Test 7:", result, np.allclose(result, expected, atol=1e-4))
+
+result = q_rotate_vector(q_from_axis_angle([0, 0, 1], 30), [1, 0, 0])
+expected = np.array([0.8660254, 0.5, 0])
+print("Test 8:", result, np.allclose(result, expected, atol=1e-4))
