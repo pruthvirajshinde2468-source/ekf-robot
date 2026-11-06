@@ -64,3 +64,14 @@ def q_to_dcm(q):
         [2*(x*y+w*z),    1-2*(x*x+z*z),  2*(y*z-w*x)],
         [2*(x*z-w*y),    2*(y*z+w*x),    1-2*(x*x+y*y)]
     ])
+
+def skew(a):
+    a = np.asarray(a, dtype=float)
+    return np.array([[    0, -a[2],  a[1]],
+                     [ a[2],     0, -a[0]],
+                     [-a[1],  a[0],     0]])
+
+def q_dot(q, omega):
+    omega = np.asarray(omega, dtype=float)
+    pure = np.concatenate(([0.0], omega))
+    return 0.5 * qmul(q, pure)
