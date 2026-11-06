@@ -53,3 +53,14 @@ def q_rotate_vector(q, v):
     out = qmul(qmul(q, pure), q_conjugate(q))
 
     return out[1:]
+
+def q_to_dcm(q):
+
+    q = np.asarray(q, dtype= float)
+
+    w, x, y, z = q
+    return np.array([
+        [1-2*(y*y+z*z),  2*(x*y-w*z),    2*(x*z+w*y)],
+        [2*(x*y+w*z),    1-2*(x*x+z*z),  2*(y*z-w*x)],
+        [2*(x*z-w*y),    2*(y*z+w*x),    1-2*(x*x+y*y)]
+    ])

@@ -1,5 +1,5 @@
 import numpy as np
-from quaternion import q_from_axis_angle, q_conjugate, q_normalize, q_rotate_vector, qmul
+from quaternion import q_from_axis_angle, q_conjugate, q_normalize, q_rotate_vector, qmul, q_to_dcm
 
 
 result = q_from_axis_angle([0, 0, 1], 90)
@@ -34,3 +34,11 @@ print("Test 7:", result, np.allclose(result, expected, atol=1e-4))
 result = q_rotate_vector(q_from_axis_angle([0, 0, 1], 30), [1, 0, 0])
 expected = np.array([0.8660254, 0.5, 0])
 print("Test 8:", result, np.allclose(result, expected, atol=1e-4))
+
+result = q_to_dcm(q_from_axis_angle([0,0,1], 30))
+expected = np.array([[0.8660254, -0.5, 0], [0.5, 0.8660254, 0], [0, 0, 1]])
+print("Test 9:", np.allclose(result, expected, atol=1e-4))
+
+q = q_from_axis_angle([1, 2, 3], 47)
+v = np.array([0.3, -0.7, 1.1])
+print("Test 10:", np.allclose(q_rotate_vector(q, v), q_to_dcm(q) @ v))
