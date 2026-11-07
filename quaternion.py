@@ -75,3 +75,11 @@ def q_dot(q, omega):
     omega = np.asarray(omega, dtype=float)
     pure = np.concatenate(([0.0], omega))
     return 0.5 * qmul(q, pure)
+
+def rk4_step(f, t, s, h):
+    k1 = f(t, s)
+    k2 = f(t + h/2, s  + (h/2) * k1)
+    k3 = f(t + h/2, s + (h/2) * k2)
+    k4 = f(t + h, s + h * k3)
+    return s + (h/6) * (k1 +2*k2 + 2*k3 + k4)
+
