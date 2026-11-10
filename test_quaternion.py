@@ -1,5 +1,5 @@
 import numpy as np
-from quaternion import q_from_axis_angle, q_conjugate, q_normalize, q_rotate_vector, qmul, q_to_dcm, skew, q_dot
+from quaternion import q_from_axis_angle, q_conjugate, q_normalize, q_rotate_vector, qmul, q_to_dcm, skew, q_dot, rk4_step, simulate_truth, omega_true
 
 
 result = q_from_axis_angle([0, 0, 1], 90)
@@ -51,3 +51,28 @@ print("Test 12:", np.allclose(q, [0,0,0,0]))
 
 q = q_dot([1,0,0,0], np.radians([0,0,10]))
 print("Test 13:", np.allclose(q, [0,0,0,10]))
+
+f = lambda t, s: np.array([2.0, -1.0])
+result = rk4_step(f, 0, np.array([0.0, 0.0]), 0.5)
+print("Test 14:", np.allclose(result, [1.0, -0.5]))
+
+
+om = lambda t: np.array([0.35*np.sin(0.4*t), 0.25, 0.20*np.cos(0.3*t)])
+ts, qs, ws = simulate_truth(om)
+print("Test 19:", ts.shape == (2001,) and qs.shape == (2001,4) and ws.shape == (2001,3))
+
+print("Test 20:", np.allclose(qs[0], [1,0,0,0]))
+
+print("Test 21:", np.abs(np.linalg.norm(qs, axis=1) - 1).max() < 1e-12)
+
+ts, qs, ws = simulate_truth(lambda t: np.zeros(3), T=5.0)
+print("Test 22:", np.allclose(qs, [1,0,0,0]))
+
+ts, qs, ws = simulate_truth(lambda t: np.array([0, 0, np.radians(10.0)]), T=9.0)
+print("Test 23:", np.allclose(qs[-1], q_from_axis_angle([0,0,1], 90)))
+
+ts, qs, ws = simulate_truth(om)
+print("Test 24:", np.allclose(qs[1000], [0.0666, 0.2136, 0.8986, 0.3775], atol=1e-4))
+
+
+

@@ -83,3 +83,26 @@ def rk4_step(f, t, s, h):
     k4 = f(t + h, s + h * k3)
     return s + (h/6) * (k1 +2*k2 + 2*k3 + k4)
 
+def omega_true(t):
+    return np.array([0.35*np.sin(0.4*t), 0.25, 0.20*np.cos(0.3*t)])
+
+def simulate_truth(omega_fn, T=20.0, dt=0.01):
+    n = int(T/dt)
+    ts = np.zeros(n+1)
+    qs = np.zeros((n+1, 4))
+    ws = np.zeros((n+1, 3))
+
+    q = np.array([1.0, 0, 0, 0])
+    qs[0] = q
+    ws[0] = omega_true(0.0)
+
+    f = lambda t, qq: q_dot(qq, omega_true(t))
+
+    for i in range(n):
+        t = i * dt
+        q = q_normalize(rk4_step(f, t, q, dt))
+        ts[i+1] = t + dt
+        qs[i+1] = q
+        ws[i+1] = omega_true(t + dt)
+
+    return ts, qs, ws
