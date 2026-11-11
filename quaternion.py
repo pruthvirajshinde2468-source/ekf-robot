@@ -128,7 +128,13 @@ def simulate_sensors(qs, ws, dt, seed=42,
 
     b = b + rng.normal(0, sigma_bias*np.sqrt(dt), 3)
 
-    return gyro, accel, bias_true
 
 
+def predict(x, gyro_reading, dt, t=0.0):
+    q = x[:4]
+    b = x[4:]
 
+    omega_hat = gyro_reading - b
+    f = lambda tt, qq: q_dot(qq, omega_hat)
+    q_new = q_normalize(rk4_step(f, t, q, dt))
+    return np.concatenate((q_new, b))
