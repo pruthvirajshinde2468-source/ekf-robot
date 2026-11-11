@@ -1,5 +1,5 @@
 import numpy as np
-from quaternion import q_from_axis_angle, q_conjugate, q_normalize, q_rotate_vector, qmul, q_to_dcm, skew, q_dot, rk4_step, simulate_truth, omega_true
+from quaternion import q_from_axis_angle, q_conjugate, q_normalize, q_rotate_vector, qmul, q_to_dcm, skew, q_dot, rk4_step, simulate_truth, omega_true, simulate_sensors
 
 
 result = q_from_axis_angle([0, 0, 1], 90)
@@ -74,5 +74,18 @@ print("Test 23:", np.allclose(qs[-1], q_from_axis_angle([0,0,1], 90)))
 ts, qs, ws = simulate_truth(om)
 print("Test 24:", np.allclose(qs[1000], [0.0666, 0.2136, 0.8986, 0.3775], atol=1e-4))
 
+dt = 0.01
+gyro, accel, bias_true = simulate_sensors(qs, ws, dt)
 
+
+print("Test 25:", gyro.shape == (2001,3) and accel.shape == (2001,3) and bias_true.shape == (2001,3))
+print("Test 26:", np.allclose(bias_true[0], [0.02, -0.015, 0.01]))
+
+
+g2, a2, b2 = simulate_sensors(qs, ws, dt, seed=42)
+print("Test 27:", np.allclose(gyro, g2) and np.allclose(accel, a2))
+print(gyro, accel, bias_true)
+
+g3, _, _ = simulate_sensors(qs, ws, dt, seed=7)
+print("Test 28:", not np.allclose(gyro, g3))
 
