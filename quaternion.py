@@ -141,3 +141,22 @@ def predict(x, gyro_reading, dt, t=0.0):
     f = lambda tt, qq: q_dot(qq, omega_hat)
     q_new = q_normalize(rk4_step(f, t, q, dt))
     return np.concatenate((q_new, b))
+
+
+def propagate_P(P, x, gyro_reading, dt,
+                sigma_gyro=0.01, sigma_bias=0.0005):
+
+    b = x[4:]
+    omega_hat = gyro_reading - b
+    I3 = np.eye(3)
+    Z3 = np.zeros((3, 3))
+    F = np.block([[-skew(omega_hat), -I3],
+                  [Z3,               Z3]])
+
+    Phi = np.eye(6) + F * dt
+
+    Q = np.block([[sigma_gyro**2 * dt**2 * I3, Z3],
+                  [Z3, sigma_bias**2 * dt * I3]])
+
+    P_new = Phi @ P @ Phi.T + Q
+    return 0.5 * (P_new + P_new.T)
