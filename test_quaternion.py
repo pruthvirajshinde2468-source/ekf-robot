@@ -50,7 +50,7 @@ q = q_dot([1,0,0,0], [0,0,0])
 print("Test 12:", np.allclose(q, [0,0,0,0]))
 
 q = q_dot([1,0,0,0], np.radians([0,0,10]))
-print("Test 13:", np.allclose(q, [0,0,0,10]))
+print("Test 13:", np.allclose(q, [0,0,0,0.0873]))
 
 f = lambda t, s: np.array([2.0, -1.0])
 result = rk4_step(f, 0, np.array([0.0, 0.0]), 0.5)
@@ -74,6 +74,8 @@ print("Test 23:", np.allclose(qs[-1], q_from_axis_angle([0,0,1], 90)))
 ts, qs, ws = simulate_truth(om)
 print("Test 24:", np.allclose(qs[1000], [0.0666, 0.2136, 0.8986, 0.3775], atol=1e-4))
 
+om = lambda t: np.array([0.35*np.sin(0.4*t), 0.25, 0.20*np.cos(0.3*t)])
+ts, qs, ws = simulate_truth(om)
 dt = 0.01
 gyro, accel, bias_true = simulate_sensors(qs, ws, dt)
 

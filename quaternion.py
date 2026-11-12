@@ -96,7 +96,7 @@ def simulate_truth(omega_fn, T=20.0, dt=0.01):
     qs[0] = q
     ws[0] = omega_fn(0.0)
 
-    f = lambda t, qq: q_dot(qq, omega_true(t))
+    f = lambda t, qq: q_dot(qq, omega_fn(t))
 
     for i in range(n):
         t = i * dt
@@ -120,14 +120,17 @@ def simulate_sensors(qs, ws, dt, seed=42,
 
     g_world = np.array([0, 0, -1.0])
     b = bias0.copy()
-    i = 0
-    bias_true[i] = b
-    gyro[i] = ws[i] +b + rng.normal(0, sigma_gyro, 3)
+    for i in range(n):
+         bias_true[i] = b
+         gyro[i] = ws[i] +b + rng.normal(0, sigma_gyro, 3)
+        
+         accel[i] = q_rotate_vector(q_conjugate(qs[i]), g_world) + rng.normal(0, sigma_accel, 3)
+        
+         b = b + rng.normal(0, sigma_bias*np.sqrt(dt), 3)
 
-    accel[i] = q_rotate_vector(q_conjugate(qs[i]), g_world) + rng.normal(0, sigma_accel, 3)
+    return gyro, accel, bias_true
 
-    b = b + rng.normal(0, sigma_bias*np.sqrt(dt), 3)
-
+   
 
 
 def predict(x, gyro_reading, dt, t=0.0):
