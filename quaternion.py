@@ -160,3 +160,52 @@ def propagate_P(P, x, gyro_reading, dt,
 
     P_new = Phi @ P @ Phi.T + Q
     return 0.5 * (P_new + P_new.T)
+
+def update(x, P, accel, sigma_accel=0.02):
+    q = x[:4]
+    b = x[4:]
+
+    g_world = np.array([0, 0, -1.0])
+    a_hat = q_rotate_vector(q_conjugate(q), g_world)
+    y = accel - a_hat
+
+    H = np.block([[skew(a_hat), np.zeros((3, 3))]])
+    R = sigma_accel**2 * np.eye(3)
+
+    S = H @ P @ H.T + R
+    K = P @ H.T @ np.linalg.inv(S)
+
+    dx = K @ y
+    dtheta = dx[:3]
+    db = dx[3:]
+
+    q_new = q_normalize(qmul(q, np.concatenate(([1.0], 0.5 * dtheta))))
+    b_new = b + db
+
+    P_new = (np.eye(6) - K @ H) @ P
+    P_new = 0.5 * (P_new + P_new.T)
+
+    return np.concatenate((q_new, b_new)), P_new
+
+def q_angle_deg(qa, qb):
+    d = qmul(q_conjugate(qa), qb)
+    return np.degrees(2 * np.arccos(min(1.0, np.abs(d[0]))))
+
+def run_filter(gyro, accel, dt, x0, P0):
+    n = len(gyro)
+    xs = np.zeros((n, 7))
+    Ps = np.zeros((n, 6, 6))
+    x = x0.copy()
+    P = P0.copy()
+    xs[0] = x
+    Ps[0] = P
+    for k in range(n - 1):
+        x_next = predict(x, gyro[k], dt)
+        P = propagate_P(P, x, gyro[k], dt)
+        x = x_next
+        x, P = update(x, P, accel[k + 1])
+        xs[k + 1] = x
+        Ps[k + 1] = P
+    return xs, Ps
+
+

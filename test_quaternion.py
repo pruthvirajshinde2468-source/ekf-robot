@@ -1,5 +1,5 @@
 import numpy as np
-from quaternion import q_from_axis_angle, q_conjugate, q_normalize, q_rotate_vector, qmul, q_to_dcm, skew, q_dot, rk4_step, simulate_truth, omega_true, simulate_sensors, predict, propagate_P
+from quaternion import q_from_axis_angle, q_conjugate, q_normalize, q_rotate_vector, qmul, q_to_dcm, skew, q_dot, rk4_step, simulate_truth, omega_true, simulate_sensors, predict, propagate_P, update, q_angle_deg, run_filter 
 
 
 result = q_from_axis_angle([0, 0, 1], 90)
@@ -122,3 +122,28 @@ P0 = np.diag([0, 0, 0, 4e-4, 4e-4, 4e-4])
 P = propagate_P(P0, x, np.zeros(3), 0.01, sigma_gyro=0, sigma_bias=0)
 print("Test 42:", np.isclose(P[0, 0], 4e-8) and np.isclose(P[0, 3], -4e-6),
       P[0, 0], P[0, 3])
+
+# Test 50: perfect reading -> no correction, but the doubt shrinks
+x = np.array([1.0, 0, 0, 0,  0, 0, 0])
+P0 = np.diag([0.1**2]*3 + [0.02**2]*3)
+x1, P1 = update(x, P0, np.array([0, 0, -1.0]))
+print("Test 50:", np.allclose(x1, x) and np.trace(P1) < np.trace(P0))
+
+
+# Test 51: the accelerometer is blind to a turn about "down"
+q_yaw = q_from_axis_angle([0, 0, 1], 30)
+a_yaw = q_rotate_vector(q_conjugate(q_yaw), [0, 0, -1.0])
+x1, P1 = update(x, P0, a_yaw)
+print("Test 51:", np.allclose(x1, x), a_yaw)
+
+# Test 53: full filter on the simulated data beats gyro-only
+ts, qs, ws = simulate_truth(omega_true)
+dt = 0.01
+gyro, accel, bias_true = simulate_sensors(qs, ws, dt)
+xs, Ps = run_filter(gyro, accel, dt, x, P0)
+err_filter = q_angle_deg(xs[-1, :4], qs[-1])
+x_g = x.copy()
+for k in range(len(gyro) - 1):
+    x_g = predict(x_g, gyro[k], dt)
+err_gyro = q_angle_deg(x_g[:4], qs[-1])
+print("Test 53:", err_filter < 5 and err_gyro > 15, err_filter, err_gyro)
