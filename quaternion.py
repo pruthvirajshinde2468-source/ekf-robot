@@ -191,7 +191,7 @@ def q_angle_deg(qa, qb):
     d = qmul(q_conjugate(qa), qb)
     return np.degrees(2 * np.arccos(min(1.0, np.abs(d[0]))))
 
-def run_filter(gyro, accel, dt, x0, P0):
+def run_filter(gyro, accel, dt, x0, P0, sigma_accel=0.02):
     n = len(gyro)
     xs = np.zeros((n, 7))
     Ps = np.zeros((n, 6, 6))
@@ -203,9 +203,26 @@ def run_filter(gyro, accel, dt, x0, P0):
         x_next = predict(x, gyro[k], dt)
         P = propagate_P(P, x, gyro[k], dt)
         x = x_next
-        x, P = update(x, P, accel[k + 1])
+        x, P = update(x, P, accel[k + 1], sigma_accel)
         xs[k + 1] = x
         Ps[k + 1] = P
     return xs, Ps
 
 
+def attitude_errors(qs_hat, qs_true):
+    n= len(qs_true)
+    tilt = np.zeros(n)
+    yaw = np. zeros(n)
+    for i in range(n):
+        d = qmul(q_conjugate(qs_hat[i]), qs_true[i])
+        if d[0] < 0:
+            d = -d
+        v = d[1:]
+        s = np.linalg.norm(v)
+        if s < 1e-12:
+            continue
+        e_body = 2 * np.arctan2(s, d[0]) * v / s
+        e_world = q_to_dcm(qs_hat[i]) @ e_body
+        tilt[i] = np.degrees(np.linalg.norm(e_world[:2]))
+        yaw[i] = np.degrees(abs(e_world[2]))
+    return tilt, yaw

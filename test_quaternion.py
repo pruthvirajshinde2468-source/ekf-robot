@@ -1,5 +1,5 @@
 import numpy as np
-from quaternion import q_from_axis_angle, q_conjugate, q_normalize, q_rotate_vector, qmul, q_to_dcm, skew, q_dot, rk4_step, simulate_truth, omega_true, simulate_sensors, predict, propagate_P, update, q_angle_deg, run_filter 
+from quaternion import q_from_axis_angle, q_conjugate, q_normalize, q_rotate_vector, qmul, q_to_dcm, skew, q_dot, rk4_step, simulate_truth, omega_true, simulate_sensors, predict, propagate_P, update, q_angle_deg, run_filter, attitude_errors 
 
 
 result = q_from_axis_angle([0, 0, 1], 90)
@@ -147,3 +147,30 @@ for k in range(len(gyro) - 1):
     x_g = predict(x_g, gyro[k], dt)
 err_gyro = q_angle_deg(x_g[:4], qs[-1])
 print("Test 53:", err_filter < 5 and err_gyro > 15, err_filter, err_gyro)
+
+
+# Test 60: belief = truth -> zero error
+q_a = q_from_axis_angle([1, 2, 3], 40)
+tilt, yaw = attitude_errors(np.array([q_a]), np.array([q_a]))
+print("Test 60:", np.allclose([tilt[0], yaw[0]], [0, 0]))
+
+# Test 61: belief is 10 deg off about "down" -> all yaw, no tilt
+q_yaw = q_from_axis_angle([0, 0, 1], 10)
+tilt, yaw = attitude_errors(np.array([q_yaw]), np.array([[1.0, 0, 0, 0]]))
+print("Test 61:", np.allclose([tilt[0], yaw[0]], [0, 10]), tilt[0], yaw[0])
+
+# Test 62: belief is 10 deg off about x -> all tilt, no yaw
+q_roll = q_from_axis_angle([1, 0, 0], 10)
+tilt, yaw = attitude_errors(np.array([q_roll]), np.array([[1.0, 0, 0, 0]]))
+print("Test 62:", np.allclose([tilt[0], yaw[0]], [10, 0]), tilt[0], yaw[0])
+
+# Test 63: on the simulated run, tilt is much better than yaw
+ts, qs, ws = simulate_truth(omega_true)
+dt = 0.01
+gyro, accel, bias_true = simulate_sensors(qs, ws, dt)
+x0 = np.array([1.0, 0, 0, 0,  0, 0, 0])
+P0 = np.diag([0.1**2]*3 + [0.02**2]*3)
+xs, Ps = run_filter(gyro, accel, dt, x0, P0)
+tilt, yaw = attitude_errors(xs[:, :4], qs)
+print("Test 63:", tilt[-500:].max() < 1.0 and yaw[-500:].max() > tilt[-500:].max(),
+      tilt[-500:].max(), yaw[-500:].max())
