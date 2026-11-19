@@ -1,6 +1,7 @@
 import numpy as np
-from quaternion import q_from_axis_angle, q_conjugate, q_normalize, q_rotate_vector, qmul, q_to_dcm, skew, q_dot, rk4_step, simulate_truth, omega_true, simulate_sensors, predict, propagate_P, update, q_angle_deg, run_filter, attitude_errors 
-
+from quaternion import q_from_axis_angle, q_conjugate, q_normalize, q_rotate_vector, qmul, q_to_dcm, skew, q_dot, rk4_step
+from simulate import omega_true, simulate_truth, simulate_sensors
+from ekf import predict, propagate_P, update, q_angle_deg, run_filter, attitude_errors
 
 result = q_from_axis_angle([0, 0, 1], 90)
 expected = np.array([0.7071, 0, 0, 0.7071])
@@ -50,7 +51,7 @@ q = q_dot([1,0,0,0], [0,0,0])
 print("Test 12:", np.allclose(q, [0,0,0,0]))
 
 q = q_dot([1,0,0,0], np.radians([0,0,10]))
-print("Test 13:", np.allclose(q, 0.5*np.radians(10)))
+print("Test 13:", np.allclose(q,[0, 0, 0, 0.5*np.radians(10)]))
 
 f = lambda t, s: np.array([2.0, -1.0])
 result = rk4_step(f, 0, np.array([0.0, 0.0]), 0.5)

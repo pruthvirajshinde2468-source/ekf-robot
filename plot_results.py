@@ -1,7 +1,8 @@
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-from quaternion import (simulate_truth, omega_true, simulate_sensors, run_filter, attitude_errors, predict)
+from simulate import simulate_truth, omega_true, simulate_sensors
+from ekf import predict, run_filter, attitude_errors
 
 os.makedirs ("results", exist_ok=True)
 
